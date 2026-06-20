@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Reconciliação DIO</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f0f4f8;}
+.header{background:#0f3d5c;color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.header h1{font-size:16px;font-weight:600;}
+.tabs-top{display:flex;background:#1a2e42;}
+.tab-top{padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;color:rgba(255,255,255,0.55);border-bottom:3px solid transparent;}
+.tab-top.active{color:#fff;border-bottom-color:#5bc8ea;}
+.controls{padding:12px 20px;background:#fff;border-bottom:1px solid #e8edf2;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.controls input{padding:8px 12px;border:1.5px solid #e8edf2;border-radius:10px;font-size:13px;width:240px;}
+.controls select{padding:8px 10px;border:1.5px solid #e8edf2;border-radius:10px;font-size:13px;background:#fff;}
+.btn{padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;display:inline-flex;align-items:center;gap:5px;}
+.btn-primary{background:#0f3d5c;color:#fff;}
+.btn-success{background:#1a6e3a;color:#fff;}
+.btn-purple{background:#7c5cbf;color:#fff;}
+.btn-orange{background:#e67e22;color:#fff;}
+.stats{display:flex;gap:8px;padding:10px 20px;background:#fff;border-bottom:1px solid #e8edf2;flex-wrap:wrap;}
+.stat{padding:4px 12px;border-radius:8px;font-size:12px;font-weight:600;}
+.s1{background:#e6f1fb;color:#0c447c;}
+.s2{background:#eaf3de;color:#27500a;}
+.s3{background:#fef3cd;color:#7a4f00;}
+.s4{background:#fde8e8;color:#7a1f1f;}
+.s5{background:#ede8f8;color:#5a3d9a;}
+.view{display:none;padding:16px 20px 40px;}
+.view.active{display:block;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+th{background:#1a2e42;color:#fff;padding:10px 12px;font-size:11px;font-weight:600;text-align:left;white-space:nowrap;}
+td{padding:8px 12px;border-bottom:1px solid #f0f4f8;font-size:13px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f7f9fc;}
+.mono{font-family:monospace;font-size:12px;font-weight:700;}
+.pill{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;}
+.pill-imp{background:#e6f1fb;color:#0c447c;}
+.pill-pil{background:#ede8f8;color:#5a3d9a;}
+.pill-pro{background:#eaf3de;color:#27500a;}
+.pill-con{background:#fef3cd;color:#7a4f00;}
+.pill-out{background:#f7f9fc;color:#4a5568;}
+.pill-novo{background:#eaf3de;color:#27500a;}
+.pill-assoc{background:#fef3cd;color:#7a4f00;}
+.pill-ign{background:#fde8e8;color:#7a1f1f;}
+select.sm{padding:5px 8px;border:1.5px solid #e8edf2;border-radius:8px;font-size:12px;background:#fff;}
+select.acao{padding:5px 8px;border-radius:8px;font-size:12px;cursor:pointer;}
+select.acao.novo{border:1.5px solid #27a354;background:#f0fdf4;color:#1a6e3a;}
+select.acao.ignorar{border:1.5px solid #e53e3e;background:#fff5f5;color:#c53030;}
+select.acao.existente{border:1.5px solid #d69e2e;background:#fffbeb;color:#744210;}
+input.preco{padding:5px 8px;border:1.5px solid #e8edf2;border-radius:8px;font-size:12px;width:75px;text-align:right;}
+.foto-sm{width:36px;height:36px;border-radius:7px;object-fit:cover;border:1px solid #e8edf2;cursor:pointer;}
+.foto-ph{width:36px;height:36px;border-radius:7px;border:2px dashed #e8edf2;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#c0ccd8;font-size:15px;flex-shrink:0;}
+.foto-ph:hover{border-color:#0f3d5c;color:#0f3d5c;}
+.empty{text-align:center;padding:40px;color:#8a9bb0;font-size:14px;}
+.progress{height:4px;background:#e8edf2;margin:0 20px 4px;border-radius:2px;overflow:hidden;}
+.pbar{height:100%;background:linear-gradient(90deg,#5bc8ea,#0f3d5c);border-radius:2px;transition:width 0.3s;width:0%;}
+.pmsg{font-size:12px;color:#8a9bb0;text-align:center;padding:2px 0 10px;}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.toast{position:fixed;bottom:20px;right:20px;background:#1a2e42;color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;z-index:999;display:none;box-shadow:0 4px 20px rgba(0,0,0,0.25);}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center;}
+.modal-box{background:#fff;border-radius:16px;padding:22px;max-width:340px;width:calc(100%-32px);}
+.modal-title{font-size:15px;font-weight:700;color:#1a2e42;margin-bottom:14px;}
+.drop-zone{border:2px dashed #e8edf2;border-radius:12px;padding:28px;text-align:center;cursor:pointer;margin-bottom:12px;}
+.drop-zone:hover{border-color:#0f3d5c;background:#f0f4f8;}
+.drop-zone i{font-size:32px;color:#8a9bb0;display:block;margin-bottom:6px;}
+.tag-novo{background:#eaf3de;color:#27500a;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;}
+.tag-ja{background:#e6f1fb;color:#0c447c;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1><i class="ti ti-arrows-exchange"></i> Reconciliação de Produtos DIO</h1>
+    <small id="headerSub">A carregar...</small>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+    <button class="btn btn-purple" onclick="exportarCSV()"><i class="ti ti-download"></i> Exportar CSV</button>
+    <button class="btn btn-success" id="btnImportar" onclick="importarSelecionados()"><i class="ti ti-database-import"></i> Importar</button>
+  </div>
+</div>
+
+<div class="tabs-top">
+  <div class="tab-top active" onclick="mudarVista('fornecedor',this)">📋 Lista do Fornecedor (115)</div>
+  <div class="tab-top" onclick="mudarVista('stock',this)" id="tabStock">📦 Stock Atual (a carregar...)</div>
+</div>
+
+<div class="controls">
+  <input type="text" id="pesquisa" placeholder="Pesquisar ref. ou descrição..." oninput="render()"/>
+  <select id="filAcao" onchange="render()">
+    <option value="">Todas as ações</option>
+    <option value="novo">➕ Adicionar</option>
+    <option value="existente">🔗 Associar</option>
+    <option value="ignorar">✕ Ignorar</option>
+  </select>
+  <select id="filCat" onchange="render()">
+    <option value="">Todas as categorias</option>
+    <option value="Implante">Implante</option>
+    <option value="Pilar">Pilar</option>
+    <option value="Protético">Protético</option>
+    <option value="Consumivel">Consumível</option>
+    <option value="Outro">Outro</option>
+  </select>
+  <button class="btn btn-primary" onclick="todosNovo()"><i class="ti ti-check-all"></i> Todos como novo</button>
+</div>
+
+<div class="stats">
+  <div class="stat s1">Fornecedor: <b id="sF">115</b></div>
+  <div class="stat s5">Stock atual: <b id="sS">0</b></div>
+  <div class="stat s2">A adicionar: <b id="sN">0</b></div>
+  <div class="stat s3">A associar: <b id="sE">0</b></div>
+  <div class="stat s4">A ignorar: <b id="sI">0</b></div>
+</div>
+
+<div class="progress"><div class="pbar" id="pbar"></div></div>
+<div class="pmsg" id="pmsg"></div>
+
+<!-- Vista fornecedor -->
+<div class="view active" id="view-fornecedor">
+  <table>
+    <thead><tr>
+      <th>Foto</th><th>Ref. Fornecedor</th><th>Descrição</th>
+      <th>Categoria</th><th>Preço €</th><th>Ação</th><th>Associar a (ref. existente)</th>
+    </tr></thead>
+    <tbody id="tbody-f"></tbody>
+  </table>
+</div>
+
+<!-- Vista stock atual -->
+<div class="view" id="view-stock">
+  <table>
+    <thead><tr>
+      <th>Foto</th><th>Ref. Stock</th><th>Categoria</th><th>Stock</th>
+      <th>Preço €</th><th>Correspondência no fornecedor</th>
+    </tr></thead>
+    <tbody id="tbody-s"></tbody>
+  </table>
+</div>
+
+<!-- Modal foto -->
+<div class="modal-bg" id="modalFoto">
+  <div class="modal-box">
+    <div class="modal-title">Foto do produto</div>
+    <img id="fotoPreview" src="" style="width:100%;border-radius:10px;margin-bottom:12px;display:none;max-height:180px;object-fit:contain;"/>
+    <div class="drop-zone" onclick="document.getElementById('inputFoto').click()">
+      <i class="ti ti-camera"></i>
+      <p style="font-size:13px;color:#8a9bb0">Clique para escolher foto</p>
+    </div>
+    <input type="file" id="inputFoto" accept="image/*" style="display:none" onchange="previewFoto(this)"/>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1" onclick="confirmarFoto()"><i class="ti ti-check"></i> Guardar</button>
+      <button class="btn" style="flex:1;background:#f7f9fc;color:#4a5568;border:1px solid #e8edf2" onclick="fecharFoto()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const db=createClient('https://dcoeclhvtpwefdvbhfzh.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjb2VjbGh2dHB3ZWZkdmJoZnpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0ODc4ODMsImV4cCI6MjA5NjA2Mzg4M30.BbuJlVU4PNXxjHjM6Tjq8S1AsI3rPreTQ1EvoAuMcgk');
+
+const NOVOS=[{"ref": "08519", "desc": "Kit casquilho mais retentivos locator (transparent"}, {"ref": "08681", "desc": "Locator FTN Regular PØ4.1, 1mm"}, {"ref": "08682", "desc": "Locator FTN Regular PØ4.1, 2mm"}, {"ref": "08683", "desc": "Locator FTN Regular PØ4.1, 3mm"}, {"ref": "08684", "desc": "Locator FTN Regular PØ4.1, 4mm"}, {"ref": "31.312.014.02-2", "desc": "Interface Dinâmico não-rotacional Ti-Base G2 comp."}, {"ref": "41.314.067.01-2", "desc": "Parafuso Dinâmico M1,4 L6,7 mm Torque max. 15N.cm"}, {"ref": "5090", "desc": "Interface rotacional 4.1 H-0.4 comp. c/ Nobel Bioc"}, {"ref": "5169", "desc": "Análogo Ø4.8 comp. c/ Nobel Biocare/Multi-unit"}, {"ref": "5173", "desc": "Pilar provisório Multi-unit rotacional Ø4.8"}, {"ref": "5223", "desc": "Parafuso M1.6-Unigrip comp. c/ Nobel Biocare/Bråne"}, {"ref": "5558", "desc": "Parafuso M2-1.20 Top thread comp. c/ BTI/Nobel Bio"}, {"ref": "5568", "desc": "Parafuso M1.4-1.20 Multi-unit"}, {"ref": "5733", "desc": "Pilar reto Multi-unit rotacional 1mm"}, {"ref": "6312", "desc": "Pilar Angulado não-rotacional Multi-unit 17º - 2mm"}, {"ref": "6313", "desc": "Pilar Angulado Multi-unit 30º - 3mm  comp. c/ BTI/"}, {"ref": "6639", "desc": "Pilar Angulado não-rotacional Multi-unit 17º - 3mm"}, {"ref": "6640", "desc": "Pilar Angulado não-rotacional Multi-unit 17º - 4mm"}, {"ref": "7948", "desc": "Interface não-rotacional 4.1 H-0.4 comp. c/ Nobel"}, {"ref": "8404", "desc": "Interface não-rotacional HE Ø3.5 H-0.5"}, {"ref": "8405", "desc": "Interface não-rotacional HE Ø3.5 H-1.5"}, {"ref": "8519", "desc": "Kit casquilho mais retentivos locator (transparent"}, {"ref": "8682", "desc": "Locator FTN Regular PØ4.1, 2mm"}, {"ref": "8683", "desc": "Locator FTN Regular PØ4.1, 3mm"}, {"ref": "ACN 40523", "desc": "Pilar reto Multi-unit DØ4.8, hex2.7 FTN Regular PØ4.1, cuff 2mm"}, {"ref": "ACN 40534", "desc": "Pilar reto Multi-unit DØ4.8, hex2.7 FTN Regular PØ4.1, cuff 3mm"}, {"ref": "AND3D AB-AR-00.3D", "desc": "Análogo digital 4.8"}, {"ref": "AND3D UB-AN-00.3D", "desc": "Análogo digital NP"}, {"ref": "AND3D UB-AR-00.3D", "desc": "Análogo digital RP"}, {"ref": "DAU 4812", "desc": "Análogo digital UF(II) Regular/Wide Ø4.8, alt.12.5mm"}, {"ref": "DAUN 3512", "desc": "Análogo digital UF(II) Narrow hex.1.7  DØ3.5, alt.12.5mm"}, {"ref": "DTH 3308SD", "desc": "Broca FTN DØ3.3, 8.5mm"}, {"ref": "DTH 3311SD", "desc": "Broca FTN DØ3.3, 11.5mm"}, {"ref": "DTH 4008SD", "desc": "Broca FTN DØ4.0, 8.5mm"}, {"ref": "DTH 4010SD", "desc": "Broca FTN DØ4.0, 10mm"}, {"ref": "DTH 4011SD", "desc": "Broca FTN DØ4.0, 11mm"}, {"ref": "DTH3310SD", "desc": "Broca FTN DØ3.3, 10mm"}, {"ref": "INC3D AB-IR-01.3D", "desc": "Custom interface Rotativa 4.8 H 0.2"}, {"ref": "INC3D AB-IR-03.3D", "desc": "Custom interface Rotativa 4.8 H 0.2"}, {"ref": "INC3D UB-IN-00.3D", "desc": "Custom interface Antirrotativa NP H 1.0"}, {"ref": "INC3D UB-IN-01.3D", "desc": "Custom interface Rotativa NP H 1.0"}, {"ref": "INC3D UB-IR-00.3D", "desc": "Custom interface Antirrotativa RP H 1.0"}, {"ref": "INC3D UB-IR-01.3D", "desc": "Custom interface Rotativa RP H 1.0"}, {"ref": "LL PH-20-25", "desc": "Punta destornillador hexagonal 1.20 L 25"}, {"ref": "OR 3401", "desc": "O-Ring preto DØ3.4"}, {"ref": "PB41416", "desc": "Sutura Glycolon violeta DS18 4/0 usp 70cm (24unid."}, {"ref": "PB41420", "desc": "Sutura Glycolon violeta DS18 4/0 ups 45cm (24unid."}, {"ref": "PFTN 4008SS", "desc": "Implante externo FTN Regular c/montador  hex2.7 PØ4.1 DØ4.0, 8.5mm"}, {"ref": "PFTN 4010S", "desc": "Implante externo FTN Regular c/montador  hex2.7 PØ4.1 DØ4.0, 10mm"}, {"ref": "PFTN 4010SS", "desc": "Implante externo FTN Regular c/montador  hex2.7 PØ4.1 DØ4.0, 10mm"}, {"ref": "PFTN 4013SS", "desc": "Implante externo FTN Regular c/montador  hex2.7 PØ4.1 DØ4.0, 13mm"}, {"ref": "PFTT 5010SS", "desc": "Implante externo FTN T-Wide c/montador  hex2.7 PØ5.0 DØ5.0, 10mm"}, {"ref": "PFTT 5011SS", "desc": "Implante externo FTN T-Wide c/montador  hex2.7 PØ5.0 DØ5.0, 11.5mm"}, {"ref": "PMA UB-MR-12", "desc": "Pilar Multi-unit 17° RP H 2.5"}, {"ref": "PMA UB-MR-33", "desc": "Pilar Multi-unit 30° RP H 3.5"}, {"ref": "PMR UB-MR-01", "desc": "Pilar Multi-unit recto RP H 1.5"}, {"ref": "PMR UB-MR-02", "desc": "Pilar Multi-unit recto RP H 2.5"}, {"ref": "PP AB-PR-00", "desc": "Pilar provisional rotativo Multi-unit 4.8"}, {"ref": "RB 32", "desc": "Removedor de parafusos M1.4/1.6"}, {"ref": "RB 34", "desc": "Removedor de parafusos M2.0/2.5"}, {"ref": "RCD 32", "desc": "Broca Reverse Cutting M1.4/1.6"}, {"ref": "RCD 34", "desc": "Broca Reverse Cutting M2.0/2.5"}, {"ref": "SC3D AB-SR-01", "desc": "Scan abutment Rotativo 4.8 H 10.0"}, {"ref": "SC3D UB-SN-00", "desc": "Scan abutment Antirrotativo NP H 10.0"}, {"ref": "SC3D UB-SN-01", "desc": "Scan abutment Rotativo NP H 10.0"}, {"ref": "SC3D UB-SR-00", "desc": "Scan abutment Antirrotativo RP H 10.0"}, {"ref": "SC3D UB-SR-01", "desc": "Scan abutment Rotativo RP H 10.0"}, {"ref": "SCAN 01[H]", "desc": "ScanBody UF(II) Regular/Wide, alt.9mm"}, {"ref": "SHN 1403", "desc": "Parafuso Multi-unit, hex1.2 DØ1.4, alt.8mm"}, {"ref": "SSCS 3400S", "desc": "Parafuso de Fecho UF(II)Regular/wide"}, {"ref": "SSHA 4524", "desc": "Pilar Cicatrização hex1.2 DØ4.6, UF(II)Regular/wide, alt.4mm"}, {"ref": "STN 1608", "desc": "Parafuso torx1.7 FTN Narrow PØ3.5, alt.12mm"}, {"ref": "TCN 40511N", "desc": "Pilar temporário rotacional Multi-unit DØ5.4, alt.11mm"}, {"ref": "TT KA-TA-00", "desc": "Tornillo titanio"}, {"ref": "TT KA-TA-01", "desc": "Tornillo titanio"}, {"ref": "TTN GC-TR-01.TIN", "desc": "Tornillo titanio TiN 4.1"}, {"ref": "TTN UB-TN-00.TIN", "desc": "Tornillo titanio TiN NP"}, {"ref": "TTN UB-TR-00.TIN", "desc": "Tornillo titanio TiN RP"}, {"ref": "UF 06", "desc": "Kit cirúrgico UF(II) Master"}, {"ref": "UF 3808SF", "desc": "Implante interno UF Regular DØ3.8 hex2.5, 8.5mm"}, {"ref": "UF 3810SF", "desc": "Implante interno UF Regular DØ3.8 hex2.5, 10mm"}, {"ref": "UF 3811SF", "desc": "Implante interno UF Regular DØ3.8 hex2.5, 11.5mm"}, {"ref": "UF 4007SF", "desc": "Implante interno UF Regular DØ4.0 hex2.5, 7mm"}, {"ref": "UF 4008SF", "desc": "Implante interno UF Regular DØ4.0 hex2.5, 8.5mm"}, {"ref": "UF 4010SF", "desc": "Implante interno UF Regular DØ4.0 hex2.5, 10mm"}, {"ref": "UF 4011SF", "desc": "Implante interno UF Regular DØ4.0 hex2.5, 11.5mm"}, {"ref": "UF 4013SF", "desc": "Implante interno UF Regular DØ4.0 hex2.5, 13mm"}, {"ref": "UF 4507SF", "desc": "Implante interno UF Regular DØ4.5 hex2.5, 7mm"}, {"ref": "UF 4508SF", "desc": "Implante interno UF Regular DØ4.5 hex2.5, 8.5mm"}, {"ref": "UF 4510SF", "desc": "Implante interno UF Regular DØ4.5 hex2.5, 10mm"}, {"ref": "UF 5007SF", "desc": "Implante interno UF Regular DØ5.0 hex2.5, 7mm"}, {"ref": "UF 5008SF", "desc": "Implante interno UF Regular DØ5.0 hex2.5, 8.5mm"}, {"ref": "UF(II) 3811SF", "desc": "Implante interno UF(II) Regular DØ3.8 hex2.5 ApexØ2.9, 11.5mm"}, {"ref": "UF(II) 4005SF", "desc": "Implante interno UF(II) Regular DØ4.0 hex2.5 ApexØ2.9, 5mm"}, {"ref": "UF(II) 4507SF", "desc": "Implante interno UF(II) Regular DØ4.5 hex2.5 ApexØ3.4, 7mm"}, {"ref": "UF(II) 4510SF", "desc": "Implante interno UF(II) Regular DØ4.5 hex2.5 ApexØ3.4, 10mm"}, {"ref": "UF(II) 4511SF", "desc": "Implante interno UF(II) Regular DØ4.5 hex2.5 ApexØ3.4, 11.5mm"}, {"ref": "UF(II) 5010SF", "desc": "Implante interno UF(II) Regular DØ5.0 hex2.5 ApexØ3.9, 10mm"}, {"ref": "UF(II)N 3010SF", "desc": "Implante interno UF(II) Narrow DØ3.0 hex1.7 ApexØ1.6, 10mm"}, {"ref": "UF(II)N 3011SF", "desc": "Implante interno UF(II) Narrow DØ3.0 hex1.7 ApexØ1.6, 11.5mm"}, {"ref": "UF(II)N 3013SF", "desc": "Implante interno UF(II) Narrow DØ3.0 hex1.7 ApexØ1.6, 13mm"}, {"ref": "UF(II)N 3308SF", "desc": "Implante interno UF(II) Narrow DØ3.3 hex1.7 ApexØ1.6, 8.5mm"}, {"ref": "UF(II)N 3311SF", "desc": "Implante interno UF(II) Narrow DØ3.3 hex1.7 ApexØ1.6, 11.5mm"}, {"ref": "UF(II)N 3313SF", "desc": "Implante interno UF(II) Narrow DØ3.3 hex1.7 ApexØ1.6, 11.5mm"}, {"ref": "UF(II)N3310SF", "desc": "Implante interno UF(II) Narrow DØ3.3 hex1.7 ApexØ1"}, {"ref": "UFHL 45501H[H]", "desc": "Interface não-rotacional DØ4.5 cuff 1mm, UF(II) Regular/Wide, alt.5mm"}, {"ref": "UFHL 45502H[H]", "desc": "Interface não-rotacional DØ4.5 cuff 2mm, UF(II) Regular/Wide, alt.5mm"}, {"ref": "UFHL 45503H[H]", "desc": "Interface não-rotacional DØ4.5 cuff 3mm, UF(II) Regular/Wide, alt.5mm"}, {"ref": "UFHL 45703H[H]", "desc": "Interface não-rotacional DØ4.5 cuff 3mm, UF(II) Regular/Wide, alt.7mm"}, {"ref": "UMA 483030H", "desc": "Pilar angulado não-rotacional Multi-unit 30º, UF(II) Regular/Wide, cuff 3mm"}, {"ref": "UNHL 40551H", "desc": "Interface não-rotacional DØ4.0 cuff 1mm, UF(II) Narrow, alt.5mm"}, {"ref": "UNHL 40552H", "desc": "Interface não-rotacional DØ4.0 cuff 2mm, UF(II) Narrow, alt.5mm"}, {"ref": "UNSAA 402015BH[H]", "desc": "Pilar p/ Cimentar angulado hex.B não-rotacional 15° DØ4.0, UF(II) Narrow, cuff 2mm"}, {"ref": "UNSAS 1407H", "desc": "Parafuso hex 1.2, torque 20Ncm, UF(II) Narrow"}, {"ref": "UNSCS 2700S", "desc": "Pack Parafusos de Fecho UF(II) Narrow"}];
+const CATS=['Implante','Pilar','Protético','Consumivel','Outro'];
+
+let stockAtual=[];
+let acoes={},cats={},assoc={},precos={},fotos={};
+let vistaAtual='fornecedor';
+let refFotoAtual=null;
+
+function catPill(c){
+  const m={'Implante':'pill-imp','Pilar':'pill-pil','Protético':'pill-pro','Consumivel':'pill-con'};
+  return '<span class="pill '+(m[c]||'pill-out')+'">'+c+'</span>';
+}
+
+function categorizar(desc){
+  const d=desc.toLowerCase();
+  if(d.includes('implante'))return 'Implante';
+  if(d.includes('pilar')||d.includes('multi-unit'))return 'Pilar';
+  if(d.includes('análogo')||d.includes('scan')||d.includes('interface')||d.includes('abutment'))return 'Protético';
+  if(d.includes('parafuso')||d.includes('broca')||d.includes('sutura')||d.includes('locator')||d.includes('tornillo')||d.includes('kit')||d.includes('o-ring')||d.includes('removedor'))return 'Consumivel';
+  return 'Outro';
+}
+
+async function init(){
+  const {data,error}=await db.from('stock').select('ref,qty,categoria,preco,foto_url').order('ref');
+  if(error){console.error(error);mostrarToast('Erro ao ligar ao Supabase!');}
+  stockAtual=data||[];
+  document.getElementById('tabStock').textContent='📦 Stock Atual ('+stockAtual.length+')';
+  document.getElementById('headerSub').textContent='115 produtos do fornecedor · '+stockAtual.length+' no stock';
+  document.getElementById('sS').textContent=stockAtual.length;
+
+  // Pre-fill
+  NOVOS.forEach(p=>{
+    const existe=stockAtual.find(s=>s.ref.toUpperCase()===p.ref.toUpperCase());
+    acoes[p.ref]=existe?'ignorar':'novo';
+    cats[p.ref]=categorizar(p.desc);
+    assoc[p.ref]=existe?existe.ref:'';
+    precos[p.ref]='';
+    fotos[p.ref]=null;
+  });
+  render();
+  atualizarStats();
+}
+
+window.mudarVista=function(v,el){
+  vistaAtual=v;
+  document.querySelectorAll('.tab-top').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  render();
+};
+
+window.render=function(){
+  const txt=document.getElementById('pesquisa').value.toLowerCase();
+  const filA=document.getElementById('filAcao').value;
+  const filC=document.getElementById('filCat').value;
+
+  if(vistaAtual==='fornecedor'){
+    const stockOpts=stockAtual.map(s=>'<option value="'+s.ref+'">'+s.ref+' ('+s.qty+' un.)</option>').join('');
+    let rows=NOVOS.filter(p=>{
+      if(txt&&!(p.ref+' '+p.desc).toLowerCase().includes(txt))return false;
+      if(filA&&acoes[p.ref]!==filA)return false;
+      if(filC&&cats[p.ref]!==filC)return false;
+      return true;
+    });
+    const tbody=document.getElementById('tbody-f');
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="7" class="empty">Sem resultados</td></tr>';return;}
+    tbody.innerHTML=rows.map(p=>{
+      const acao=acoes[p.ref]||'novo';
+      const cat=cats[p.ref]||'Outro';
+      const existe=stockAtual.find(s=>s.ref.toUpperCase()===p.ref.toUpperCase());
+      const fUrl=fotos[p.ref]?fotos[p.ref].preview:'';
+      const fHtml=fUrl?
+        '<img src="'+fUrl+'" class="foto-sm" onclick="abrirFoto(''+esc(p.ref)+'')"/>':
+        '<div class="foto-ph" onclick="abrirFoto(''+esc(p.ref)+'')"><i class="ti ti-camera"></i></div>';
+      return '<tr>'+
+        '<td>'+fHtml+'</td>'+
+        '<td><span class="mono">'+p.ref+'</span>'+(existe?'<br><span class="tag-ja">Já existe</span>':'<br><span class="tag-novo">Novo</span>')+'</td>'+
+        '<td style="font-size:12px;color:#4a5568;max-width:240px">'+p.desc+'</td>'+
+        '<td><select class="sm" onchange="setCat(''+esc(p.ref)+'',this.value)">'+
+          CATS.map(c=>'<option'+(c===cat?' selected':'')+'>'+c+'</option>').join('')+
+        '</select></td>'+
+        '<td><input type="number" class="preco" placeholder="0.00" step="0.01" min="0" value="'+(precos[p.ref]||'')+'" onchange="setPreco(''+esc(p.ref)+'',this.value)"/></td>'+
+        '<td><select class="acao '+acao+'" onchange="setAcao(''+esc(p.ref)+'',this.value,this)">'+
+          '<option value="novo"'+(acao==='novo'?' selected':'')+'>➕ Adicionar</option>'+
+          '<option value="existente"'+(acao==='existente'?' selected':'')+'>🔗 Associar</option>'+
+          '<option value="ignorar"'+(acao==='ignorar'?' selected':'')+'>✕ Ignorar</option>'+
+        '</select></td>'+
+        '<td>'+(acao==='existente'?
+          '<select class="sm" style="max-width:170px" onchange="setAssoc(''+esc(p.ref)+'',this.value)">'+
+            '<option value="">-- escolher --</option>'+stockOpts+
+          '</select>':
+          '<span style="font-size:11px;color:#c0ccd8">'+(acao==='novo'?'Será criado':'—')+'</span>')+
+        '</td>'+
+      '</tr>';
+    }).join('');
+  } else {
+    // Stock view
+    let rows=stockAtual.filter(s=>{
+      if(txt&&!s.ref.toLowerCase().includes(txt))return false;
+      if(filC&&(s.categoria||'Implante')!==filC)return false;
+      return true;
+    });
+    const tbody=document.getElementById('tbody-s');
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="6" class="empty">Sem resultados</td></tr>';return;}
+    tbody.innerHTML=rows.map(s=>{
+      const match=NOVOS.find(p=>p.ref.toUpperCase()===s.ref.toUpperCase());
+      const fHtml=s.foto_url?
+        '<img src="'+s.foto_url+'" class="foto-sm"/>':
+        '<div class="foto-ph" style="cursor:default"><i class="ti ti-photo-off"></i></div>';
+      return '<tr>'+
+        '<td>'+fHtml+'</td>'+
+        '<td><span class="mono">'+s.ref+'</span></td>'+
+        '<td>'+catPill(s.categoria||'Implante')+'</td>'+
+        '<td><b>'+s.qty+'</b> un.</td>'+
+        '<td>'+(s.preco?s.preco.toFixed(2)+' €':'<span style="color:#c0ccd8">—</span>')+'</td>'+
+        '<td>'+(match?
+          '<span style="font-size:12px;color:#27500a;font-weight:600">✓ '+match.ref+'</span><br><span style="font-size:11px;color:#8a9bb0">'+match.desc.substring(0,50)+'</span>':
+          '<span style="font-size:12px;color:#e53e3e">⚠ Não encontrado na lista</span>')+
+        '</td>'+
+      '</tr>';
+    }).join('');
+  }
+};
+
+function esc(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+window.setAcao=function(ref,val,sel){acoes[ref]=val;sel.className='acao '+val;atualizarStats();};
+window.setCat=function(ref,val){cats[ref]=val;};
+window.setAssoc=function(ref,val){assoc[ref]=val;};
+window.setPreco=function(ref,val){precos[ref]=val;};
+window.todosNovo=function(){NOVOS.forEach(p=>{if(acoes[p.ref]!=='ignorar')acoes[p.ref]='novo';});atualizarStats();render();};
+
+function atualizarStats(){
+  document.getElementById('sN').textContent=Object.values(acoes).filter(a=>a==='novo').length;
+  document.getElementById('sE').textContent=Object.values(acoes).filter(a=>a==='existente').length;
+  document.getElementById('sI').textContent=Object.values(acoes).filter(a=>a==='ignorar').length;
+}
+
+// ── FOTO ──────────────────────────────────────────────────────────
+window.abrirFoto=function(ref){
+  refFotoAtual=ref;
+  const prev=document.getElementById('fotoPreview');
+  const url=fotos[ref]?fotos[ref].preview:'';
+  prev.src=url;prev.style.display=url?'block':'none';
+  document.getElementById('modalFoto').style.display='flex';
+};
+window.fecharFoto=function(){document.getElementById('modalFoto').style.display='none';refFotoAtual=null;};
+window.previewFoto=function(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const prev=document.getElementById('fotoPreview');
+    prev.src=e.target.result;prev.style.display='block';
+    fotos[refFotoAtual]={preview:e.target.result,file};
+  };
+  reader.readAsDataURL(file);
+};
+window.confirmarFoto=function(){fecharFoto();render();mostrarToast('Foto guardada — enviada ao importar');};
+
+async function uploadFoto(ref,fd){
+  try{
+    const b64=fd.preview.split(',')[1];
+    const mime=fd.preview.match(/data:([^;]+)/)[1];
+    const ext=mime.split('/')[1];
+    const nome='produtos/'+ref.replace(/[^a-zA-Z0-9]/g,'-')+'-'+Date.now()+'.'+ext;
+    const bytes=atob(b64);const arr=new Uint8Array(bytes.length);
+    for(let i=0;i<bytes.length;i++)arr[i]=bytes.charCodeAt(i);
+    const {error}=await db.storage.from('produtos').upload(nome,new Blob([arr],{type:mime}),{upsert:true});
+    if(error)throw error;
+    return db.storage.from('produtos').getPublicUrl(nome).data.publicUrl;
+  }catch(e){console.error(e);return null;}
+}
+
+// ── IMPORTAR ──────────────────────────────────────────────────────
+window.importarSelecionados=async function(){
+  const aNovo=NOVOS.filter(p=>acoes[p.ref]==='novo');
+  const aAssoc=NOVOS.filter(p=>acoes[p.ref]==='existente'&&assoc[p.ref]);
+  if(!aNovo.length&&!aAssoc.length){mostrarToast('Nenhum produto selecionado!');return;}
+  const btn=document.getElementById('btnImportar');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> A importar...';
+  let ok=0,erros=0;
+  const total=aNovo.length+aAssoc.length;
+
+  for(const p of aNovo){
+    try{
+      let fotoUrl=null;
+      if(fotos[p.ref])fotoUrl=await uploadFoto(p.ref,fotos[p.ref]);
+      const d={ref:p.ref,qty:0,categoria:cats[p.ref]||'Outro'};
+      if(precos[p.ref])d.preco=parseFloat(precos[p.ref]);
+      if(fotoUrl)d.foto_url=fotoUrl;
+      await db.from('stock').insert(d);
+      ok++;
+    }catch(e){erros++;console.error(p.ref,e);}
+    document.getElementById('pbar').style.width=Math.round((ok+erros)/total*100)+'%';
+    document.getElementById('pmsg').textContent='A importar '+(ok+erros)+'/'+total+'...';
+  }
+  for(const p of aAssoc){
+    try{
+      let fotoUrl=null;
+      if(fotos[p.ref])fotoUrl=await uploadFoto(p.ref,fotos[p.ref]);
+      const d={categoria:cats[p.ref]};
+      if(precos[p.ref])d.preco=parseFloat(precos[p.ref]);
+      if(fotoUrl)d.foto_url=fotoUrl;
+      await db.from('stock').update(d).eq('ref',assoc[p.ref]);
+      ok++;
+    }catch(e){erros++;console.error(p.ref,e);}
+    document.getElementById('pbar').style.width=Math.round((ok+erros)/total*100)+'%';
+    document.getElementById('pmsg').textContent='A processar '+(ok+erros)+'/'+total+'...';
+  }
+
+  document.getElementById('pmsg').textContent=ok+' importados'+(erros?' ('+erros+' erros)':'')+'!';
+  mostrarToast('✅ '+ok+' produto'+(ok!==1?'s':'')+' importado'+(ok!==1?'s':'')+(erros?' ('+erros+' erros)':'')+'!');
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-database-import"></i> Importar';
+  // Refresh stock
+  const {data}=await db.from('stock').select('ref,qty,categoria,preco,foto_url').order('ref');
+  stockAtual=data||[];
+  document.getElementById('sS').textContent=stockAtual.length;
+  render();
+};
+
+window.exportarCSV=function(){
+  const rows=[['ref_fornecedor','descricao','categoria','preco','acao','ref_existente']];
+  NOVOS.forEach(p=>rows.push([p.ref,p.desc,cats[p.ref]||'',precos[p.ref]||'',acoes[p.ref]||'novo',assoc[p.ref]||'']));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='reconciliacao_DIO.csv';a.click();
+};
+
+function mostrarToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',4000);
+}
+
+init();
+</script>
+</body>
+</html>
